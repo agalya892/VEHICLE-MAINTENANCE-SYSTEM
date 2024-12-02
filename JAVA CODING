@@ -1,0 +1,209 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+class Vehicle {
+    private String registrationNumber;
+    private String make;
+    private String model;
+    private String owner;
+
+    public Vehicle(String registrationNumber, String make, String model, String owner) {
+        this.registrationNumber = registrationNumber;
+        this.make = make;
+        this.model = model;
+        this.owner = owner;
+    }
+
+    public String getRegistrationNumber() {
+        return registrationNumber;
+    }
+
+    @Override
+    public String toString() {
+        return "Vehicle{" +
+                "Registration='" + registrationNumber + '\'' +
+                ", Make='" + make + '\'' +
+                ", Model='" + model + '\'' +
+                ", Owner='" + owner + '\'' +
+                '}';
+    }
+}
+
+class MaintenanceRecord {
+    private LocalDate date;
+    private String description;
+    private double cost;
+
+    public MaintenanceRecord(LocalDate date, String description, double cost) {
+        this.date = date;
+        this.description = description;
+        this.cost = cost;
+    }
+
+    @Override
+    public String toString() {
+        return "MaintenanceRecord{" +
+                "Date=" + date +
+                ", Description='" + description + '\'' +
+                ", Cost=" + cost +
+                '}';
+    }
+}
+
+class VehicleMaintenanceSystem {
+    private HashMap<String, Vehicle> vehicles = new HashMap<>();
+    private HashMap<String, List<MaintenanceRecord>> maintenanceRecords = new HashMap<>();
+    private HashMap<String, LocalDate> scheduledMaintenance = new HashMap<>();
+
+    // Add a new vehicle
+    public void addVehicle(String regNumber, String make, String model, String owner) {
+        vehicles.put(regNumber, new Vehicle(regNumber, make, model, owner));
+        maintenanceRecords.put(regNumber, new ArrayList<>());
+    }
+
+    // Add a maintenance record
+    public void addMaintenanceRecord(String regNumber, LocalDate date, String description, double cost) {
+        if (vehicles.containsKey(regNumber)) {
+            maintenanceRecords.get(regNumber).add(new MaintenanceRecord(date, description, cost));
+        }
+    }
+
+    // Schedule maintenance
+    public void scheduleMaintenance(String regNumber, LocalDate date) {
+        if (vehicles.containsKey(regNumber)) {
+            scheduledMaintenance.put(regNumber, date);
+        }
+    }
+
+    // Check upcoming maintenance
+    public HashMap<String, LocalDate> getScheduledMaintenance() {
+        return scheduledMaintenance;
+    }
+
+    // View maintenance history
+    public List<MaintenanceRecord> getMaintenanceHistory(String regNumber) {
+        return maintenanceRecords.get(regNumber);
+    }
+}
+
+public class Main extends Frame {
+    private VehicleMaintenanceSystem system = new VehicleMaintenanceSystem();
+    private TextField regNumberField, makeField, modelField, ownerField, descField, costField, dateField;
+    private TextArea outputArea;
+
+    public Main() {
+        setLayout(new FlowLayout());
+
+        setTitle("Vehicle Maintenance System");
+
+        // Add Vehicle Fields
+        add(new Label("Registration Number:"));
+        regNumberField = new TextField(20);
+        add(regNumberField);
+
+        add(new Label("Make:"));
+        makeField = new TextField(20);
+        add(makeField);
+
+        add(new Label("Model:"));
+        modelField = new TextField(20);
+        add(modelField);
+
+        add(new Label("Owner:"));
+        ownerField = new TextField(20);
+        add(ownerField);
+
+        Button addButton = new Button("Add Vehicle");
+        addButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String regNumber = regNumberField.getText();
+                String make = makeField.getText();
+                String model = modelField.getText();
+                String owner = ownerField.getText();
+                system.addVehicle(regNumber, make, model, owner);
+                outputArea.append("Vehicle added: " + regNumber + "\n");
+            }
+        });
+        add(addButton);
+
+        // Maintenance Record Fields
+        add(new Label("Maintenance Date (YYYY-MM-DD):"));
+        dateField = new TextField(20);
+        add(dateField);
+
+        add(new Label("Description:"));
+        descField = new TextField(20);
+        add(descField);
+
+        add(new Label("Cost:"));
+        costField = new TextField(20);
+        add(costField);
+
+        Button addMaintenanceButton = new Button("Add Maintenance Record");
+        addMaintenanceButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String regNumber = regNumberField.getText();
+                LocalDate date = LocalDate.parse(dateField.getText());
+                String description = descField.getText();
+                double cost = Double.parseDouble(costField.getText());
+                system.addMaintenanceRecord(regNumber, date, description, cost);
+                outputArea.append("Maintenance record added for " + regNumber + "\n");
+            }
+        });
+        add(addMaintenanceButton);
+
+        // Scheduled Maintenance
+        Button scheduleButton = new Button("Schedule Maintenance");
+        scheduleButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String regNumber = regNumberField.getText();
+                LocalDate date = LocalDate.parse(dateField.getText());
+                system.scheduleMaintenance(regNumber, date);
+                outputArea.append("Maintenance scheduled for " + regNumber + "\n");
+            }
+        });
+        add(scheduleButton);
+
+        // View Maintenance History
+        Button viewHistoryButton = new Button("View Maintenance History");
+        viewHistoryButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String regNumber = regNumberField.getText();
+                List<MaintenanceRecord> history = system.getMaintenanceHistory(regNumber);
+                outputArea.append("Maintenance history for " + regNumber + ":\n");
+                for (MaintenanceRecord record : history) {
+                    outputArea.append(record + "\n");
+                }
+            }
+        });
+        add(viewHistoryButton);
+
+        // Check Upcoming Reminders
+        Button checkRemindersButton = new Button("Check Reminders");
+        checkRemindersButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                HashMap<String, LocalDate> reminders = system.getScheduledMaintenance();
+                outputArea.append("Upcoming maintenance reminders:\n");
+                for (String regNumber : reminders.keySet()) {
+                    outputArea.append("Vehicle: " + regNumber + ", Date: " + reminders.get(regNumber) + "\n");
+                }
+            }
+        });
+        add(checkRemindersButton);
+
+        // Output area
+        outputArea = new TextArea(10, 40);
+        add(outputArea);
+
+        setSize(400, 600);
+        setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new Main();
+    }
+}
